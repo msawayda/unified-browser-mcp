@@ -10,42 +10,267 @@ A Model Context Protocol (MCP) server that combines Playwright browser automatio
 - **Performance Metrics**: Extract Navigation Timing API data
 - **Single Browser Instance**: All operations work on the same browser/page for consistency
 
+## What is an MCP Server?
+
+The Model Context Protocol (MCP) allows AI assistants like Claude to interact with external tools and services. This MCP server acts as a bridge between Claude and browser automation capabilities, running automatically in the background whenever you use Claude Desktop or Cursor.
+
+**Key Points:**
+- 🔄 **Automatic Startup**: The server launches automatically when you open Cursor/Claude Desktop
+- 🔌 **No Manual Running**: You never need to manually start the server
+- 🛠️ **Tool Provider**: Makes browser automation tools available to Claude
+- 💬 **Communication**: Uses JSON-RPC over stdio to talk to Claude
+
 ## Installation
 
-1. Install dependencies:
+### Prerequisites
+
+Before installing, ensure you have:
+- **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
+- **Git** (optional, for cloning) - [Download here](https://git-scm.com/)
+- **Cursor** or **Claude Desktop** - [Download Cursor](https://cursor.sh/)
+
+### Step 1: Get the Code
+
+Choose one of these methods:
+
+**Option A: Clone from GitHub (Recommended)**
 ```bash
+git clone https://github.com/msawayda/unified-browser-mcp.git
 cd unified-browser-mcp
+```
+
+**Option B: Download ZIP**
+1. Go to https://github.com/msawayda/unified-browser-mcp
+2. Click "Code" → "Download ZIP"
+3. Extract to your preferred location
+4. Open terminal/command prompt in that folder
+
+### Step 2: Install Dependencies
+
+```bash
 npm install
 ```
 
-2. Build the TypeScript code:
+This will install:
+- `@modelcontextprotocol/sdk` - MCP communication layer
+- `playwright` - Browser automation library
+- TypeScript and build tools
+
+**Expected output:**
+```
+added 19 packages, and audited 20 packages in 25s
+found 0 vulnerabilities
+```
+
+### Step 3: Build the Server
+
 ```bash
 npm run build
 ```
 
-3. Install Playwright browsers (first time only):
+This compiles the TypeScript code to JavaScript in the `build/` directory.
+
+**Expected output:**
+```
+> unified-browser-mcp@1.0.0 build
+> tsc
+```
+
+You should now see a `build/` folder with `index.js` inside.
+
+### Step 4: Install Playwright Browsers
+
 ```bash
 npx playwright install chromium
 ```
 
+This downloads the Chromium browser (~150 MB) that Playwright will use.
+
+**Expected output:**
+```
+Downloading Chromium 141.0.7390.37...
+Chromium downloaded to C:\Users\[username]\AppData\Local\ms-playwright\chromium-1194
+```
+
+**Note:** This only needs to be done once per machine.
+
 ## Configuration
 
-Add to your Claude Desktop config file (`C:\Users\[username]\.cursor\mcp.json`):
+### Locate Your MCP Configuration File
 
+The MCP configuration file location depends on your operating system:
+
+| OS | Configuration File Path |
+|---|---|
+| **Windows** | `C:\Users\[username]\.cursor\mcp.json` |
+| **macOS** | `~/Library/Application Support/Cursor/mcp.json` |
+| **Linux** | `~/.config/cursor/mcp.json` |
+
+**For Claude Desktop** (instead of Cursor):
+- **Windows**: `C:\Users\[username]\AppData\Roaming\Claude\mcp.json`
+- **macOS**: `~/Library/Application Support/Claude/mcp.json`
+- **Linux**: `~/.config/Claude/mcp.json`
+
+### Add the Server Configuration
+
+1. **Open the config file** in a text editor (create it if it doesn't exist)
+
+2. **Add your server** to the `mcpServers` object:
+
+**Windows Example:**
 ```json
 {
   "mcpServers": {
     "unified-browser": {
       "command": "node",
       "args": [
-        "C:\\Users\\mikes\\CursorScratchpad\\unified-browser-mcp\\build\\index.js"
+        "C:\\Users\\YourUsername\\unified-browser-mcp\\build\\index.js"
       ]
     }
   }
 }
 ```
 
-After updating the config, restart Cursor/Claude Desktop.
+**macOS/Linux Example:**
+```json
+{
+  "mcpServers": {
+    "unified-browser": {
+      "command": "node",
+      "args": [
+        "/Users/yourusername/unified-browser-mcp/build/index.js"
+      ]
+    }
+  }
+}
+```
+
+**Important Notes:**
+- ✅ Use **absolute paths** (full path from root)
+- ✅ On Windows, use **double backslashes** (`\\`) or forward slashes (`/`)
+- ✅ Replace `YourUsername` with your actual username
+- ✅ Match the path to where you installed the server
+
+3. **If you already have other MCP servers**, add a comma after the previous entry:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx @playwright/mcp@latest"
+    },
+    "unified-browser": {
+      "command": "node",
+      "args": [
+        "C:\\path\\to\\unified-browser-mcp\\build\\index.js"
+      ]
+    }
+  }
+}
+```
+
+### Step 5: Restart Cursor/Claude Desktop
+
+**Important:** You must completely restart the application for MCP servers to load.
+
+1. **Close Cursor/Claude Desktop completely** (not just the window)
+2. **Reopen the application**
+3. The MCP server will now start automatically in the background
+
+## How It Works
+
+### Automatic Server Management
+
+When you start Cursor/Claude Desktop:
+
+1. **Cursor reads** your `mcp.json` configuration
+2. **Launches the server** by running: `node path/to/build/index.js`
+3. **Establishes communication** via stdio (standard input/output)
+4. **Keeps it running** in the background throughout your session
+5. **Shuts it down** automatically when you close Cursor
+
+You'll see this in the server logs (stderr):
+```
+Unified Browser MCP server running on stdio
+```
+
+### Using the Server
+
+Once configured and Cursor is restarted:
+
+1. **Start a conversation** with Claude in Cursor
+2. **The tools are automatically available** - Claude can now use browser automation commands
+3. **Request browser actions** like:
+   - "Launch a browser and navigate to example.com"
+   - "Fill out this form and monitor the network requests"
+   - "Take a screenshot of the current page"
+4. **Claude will execute** using the MCP tools behind the scenes
+
+**You never need to manually start or stop the server!**
+
+## Verification
+
+### Check If the Server Loaded Successfully
+
+After restarting Cursor, you can verify the server is working:
+
+1. **Start a new chat with Claude**
+2. **Ask:** "What MCP tools do you have available?"
+3. **Look for:** Tools like `launch_browser`, `navigate`, `start_monitoring`, etc.
+
+If you see these tools, the server is running correctly! ✅
+
+### Common Installation Issues
+
+#### ❌ "Cannot find module '@modelcontextprotocol/sdk'"
+**Problem:** Dependencies not installed
+
+**Solution:**
+```bash
+cd unified-browser-mcp
+npm install
+```
+
+#### ❌ "build/index.js not found"
+**Problem:** TypeScript not compiled
+
+**Solution:**
+```bash
+npm run build
+```
+
+#### ❌ "Playwright browsers not found"
+**Problem:** Chromium not downloaded
+
+**Solution:**
+```bash
+npx playwright install chromium
+```
+
+#### ❌ Tools not appearing in Claude
+**Possible causes:**
+1. **Wrong path in mcp.json** - Double-check the absolute path
+2. **Didn't restart Cursor** - Must fully restart, not just reload window
+3. **JSON syntax error** - Validate your JSON at https://jsonlint.com/
+4. **Wrong file location** - Config must be in the correct OS-specific location
+
+**Debug steps:**
+1. Check Cursor's developer console (Help → Toggle Developer Tools)
+2. Look for MCP-related errors
+3. Verify the path exists: `node C:\path\to\build\index.js` should output the server message
+
+## Updating
+
+To update the server after pulling new changes:
+
+```bash
+cd unified-browser-mcp
+git pull origin main  # If using git
+npm install           # Install any new dependencies
+npm run build         # Rebuild
+```
+
+Then restart Cursor/Claude Desktop.
 
 ## Available Tools
 
