@@ -26,14 +26,43 @@ The Model Context Protocol (MCP) allows AI assistants like Claude to interact wi
 
 Before installing, ensure you have:
 - **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
-- **Git** (optional, for cloning) - [Download here](https://git-scm.com/)
 - **Cursor** or **Claude Desktop** - [Download Cursor](https://cursor.sh/)
 
-### Step 1: Get the Code
+### Method 1: Using npx (Recommended - Easiest)
+
+**This is the simplest method** - no cloning, no building, just one config update!
+
+Simply add this to your MCP configuration file and restart Cursor:
+
+```json
+{
+  "mcpServers": {
+    "unified-browser": {
+      "command": "npx",
+      "args": ["-y", "unified-browser-mcp"]
+    }
+  }
+}
+```
+
+**That's it!** The server will be automatically downloaded and run when Cursor starts.
+
+**Note:** You'll still need to install Playwright browsers once:
+```bash
+npx playwright install chromium
+```
+
+---
+
+### Method 2: Manual Installation from Source
+
+If you prefer to build from source or want to modify the code:
+
+**Step 1: Get the Code**
 
 Choose one of these methods:
 
-**Option A: Clone from GitHub (Recommended)**
+**Option A: Clone from GitHub**
 ```bash
 git clone https://github.com/msawayda/unified-browser-mcp.git
 cd unified-browser-mcp
@@ -45,7 +74,7 @@ cd unified-browser-mcp
 3. Extract to your preferred location
 4. Open terminal/command prompt in that folder
 
-### Step 2: Install Dependencies
+**Step 2: Install Dependencies**
 
 ```bash
 npm install
@@ -62,7 +91,7 @@ added 19 packages, and audited 20 packages in 25s
 found 0 vulnerabilities
 ```
 
-### Step 3: Build the Server
+**Step 3: Build the Server**
 
 ```bash
 npm run build
@@ -78,7 +107,7 @@ This compiles the TypeScript code to JavaScript in the `build/` directory.
 
 You should now see a `build/` folder with `index.js` inside.
 
-### Step 4: Install Playwright Browsers
+**Step 4: Install Playwright Browsers**
 
 ```bash
 npx playwright install chromium
@@ -116,6 +145,24 @@ The MCP configuration file location depends on your operating system:
 1. **Open the config file** in a text editor (create it if it doesn't exist)
 
 2. **Add your server** to the `mcpServers` object:
+
+#### For npx Installation (Method 1):
+
+**All Operating Systems:**
+```json
+{
+  "mcpServers": {
+    "unified-browser": {
+      "command": "npx",
+      "args": ["-y", "unified-browser-mcp"]
+    }
+  }
+}
+```
+
+Simple! Same config works on Windows, macOS, and Linux.
+
+#### For Manual Installation (Method 2):
 
 **Windows Example:**
 ```json
@@ -157,13 +204,12 @@ The MCP configuration file location depends on your operating system:
 {
   "mcpServers": {
     "playwright": {
-      "command": "npx @playwright/mcp@latest"
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
     },
     "unified-browser": {
-      "command": "node",
-      "args": [
-        "C:\\path\\to\\unified-browser-mcp\\build\\index.js"
-      ]
+      "command": "npx",
+      "args": ["-y", "unified-browser-mcp"]
     }
   }
 }
